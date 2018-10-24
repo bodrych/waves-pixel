@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<script src="https://cdn.jsdelivr.net/npm/vue@2.5.17/dist/vue.min.js"></script>
+	<script src="https://unpkg.com/base-58@0.0.1/Base58.js"></script>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAABFvgAARb4B0IHyYgAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAIpSURBVHic5du5edtAFEXhM66HqM/OBGVWexz2ohBO/PhJFJZZ3oLlNkCcP5BIYACByzmPj8fjb+Q1pKgPzjmPwBtASunjdrv9ibiOEICv8c8LCUJwB5iLl0UguAKsxcu8EdwASuJlngguADXxMi8Ec4CWeJkHgilAT7zMGsEMQCNeZolgAqAZL7NCUAewiJdZIKgCWMbLtBHUADziZZoIKgCe8TIthG6AiHiZBkIXQGS8rBehGWAP8bIehCaAPcXLWhGqAfYYL2tBqALYc7ysFqEY4AjxshqEIoAjxctKETYBjhgvK0FYBThyvGwLYRHgDPGyNYRZgDPFy5YQfgCcMV42h/AN4MzxsleEJ8AV4mVfERJcK14mCOmK8bKU0sevaZo+oy8katM0fSaA+/3+O6UUelAhYOMwDO/PP4IXQxiHYXiHl3+DF0F4xsPMF6GTI3yLh4WvwidF+BEPKz+GToYwGw8bP4dPgrAYDwU3RA6OsBoPhbfEDoqwGQ8VN0UPhlAUD5W3xQ+CUBwPDQ9Gdo5QFQ+Nj8Z2ilAdDx0PR3eG0BQPnY/Hd4LQHA8KBySCEbriQemITBBCdzwoHpJyRlCJB+Vjck4IavFgcFDSGEE1HoyOyhohqMeD4WFpZQSTeDA+Lq+EYBYPDi9MdCKYxoPTKzONCObx4PjSVCWCSzw4vzZXiOAWDwEvTm4guMZD0KuzCwju8RD48vQLQkh8+HLO4//zCWH7B6TVRCpVqUZ2AAAAAElFTkSuQmCC" />
+	<title>Waves Pixel</title>
+	<style>
+	body {
+		font-family: Consolas, monospace;
+		font-size: 13px;
+	}
+	#app {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+	}
+	#canvas {
+		width: 100%;
+		image-rendering: pixelated;
+	}
+	#canvas-wrapper {
+		height: 90vh;
+		width: 90vh;
+		border: 1px solid lightgray;
+		margin: 0px 0px 0px 0px;
+	}
+	#palette {
+		margin: 5px 0px 0px 0px;
+		border: 1px solid lightgray;
+		display: flex;
+		flex-direction: row;
+		width: 90vh;
+	}
+	#palette > div {
+		height: 30px;
+		flex:1;
+	}
+	#footer {
+		margin: 5px 0px 0px 0px;
+		display: flex;
+		justify-content: space-between;
+		width: 90vh;
+	}
+</style>
+</head>
+<body>
+	<div id="app">
+		<div :style="{'border-bottom': '1px solid' + colors[color]}">
+			{{ cursor.x }}, {{ cursor.y }}
+		</div>
+		<div id="canvas-wrapper">
+			<canvas id="canvas" width="100" height="100" @mousemove="move" @click.left="click"></canvas>
+		</div>
+		<div id="palette">
+			<div :style="{'background-color': item}" v-for="(item, index) in colors" @click.left="colorClick(index)"></div>
+		</div>
+		<div id="footer">
+			<div>
+				Canvas: <a :href="'https://testnet.wavesexplorer.com/address/' + canvas">{{ canvas }}</a>
+			</div>
+			<div>
+				Fee: {{ fee }} WAVES
+			</div>
+			<a href="https://github.com/bodrych/wavespixel">GitHub</a>
+			<a href="https://forum.wavesplatform.com/t/waves-keeper-beta/3547">Waves Keeper</a>
+		</div>
+	</div>
+	<script>
+		var app = new Vue({
+			el: '#app',
+			data: {
+				pixels: [],
+				// canvas: '3PPPPPpPDKZYvBHmSB71PTwnepyWHMrNgfY',
+				canvas: '3NBF3s2XEGGX7zy8pPxQWLZMEEwTP1ukwu1',
+				// node: 'https://nodes.wavesplatform.com',
+				node: 'https://testnode1.wavesnodes.com',
+				publicKey: 'HeCW9krSqPM6AURLcgyj3PhHX3s742gPo8STVNQRM71P',
+				fee: '0.005',
+				last: 0,
+				maxHeight: 99,
+				maxWidth: 99,
+				cursor: {x: 0, y: 0},
+				colors: [
+					'#000000',
+					'#7e7e7e',
+					'#bebebe',
+					'#ffffff',
+					'#7e0000',
+					'#fe0000',
+					'#047e00',
+					'#06ff04',
+					'#ffff04',
+					'#7e7e00',
+					'#00007e',
+					'#0000ff',
+					'#7e007e',
+					'#fe00ff',
+					'#047e7e',
+					'#06ffff'
+				],
+				color: 0
+			},
+			created: function() {
+				this.update();
+				setInterval(this.update, 1000);
+			},
+			methods: {
+				colorClick: function(color) {
+					this.color = color;
+				},
+				move: function(event) {
+					this.cursor.x = Math.floor(event.layerX / (event.toElement.clientWidth / 100));
+					this.cursor.y = Math.floor(event.layerY / (event.toElement.clientHeight / 100));
+				},
+				click: function() {
+					this.setPixel(this.cursor.x, this.cursor.y, this.color);
+				},
+				loadTxs: async function(limit) {
+					let rawData = await fetch(this.node + '/transactions/address/' + this.canvas + '/limit/' + limit);
+					let data = await rawData.json();
+					return data;
+				},
+				update: async function() {
+					let lastTx = await this.loadTxs(1);
+					let lastTime = lastTx[0][0].timestamp;
+					if (lastTime != this.last) {
+						let data = await this.getData();
+						this.pixels = data.slice(0);
+						let canvas = document.getElementById('canvas'),
+						ctx = canvas.getContext('2d');
+						ctx.clearRect(0, 0, canvas.width, canvas.height);
+						this.pixels.forEach(item => {
+							ctx.fillStyle = this.colors[item.c];
+							ctx.fillRect( item.x, item.y, 1, 1 );
+						});
+						this.last = lastTime.valueOf();
+					}
+				},
+				checkKeeper: function() {
+					return typeof window.Waves !== 'undefined';
+				},
+				getOffset: function(x, y) {
+					let offset = x + y * (this.maxWidth + 1);
+					return offset;
+				},
+				getXY: function(offset) {
+					let x = offset % (this.maxWidth + 1);
+					let y = Math.floor(offset / (this.maxWidth + 1));
+					return {'x': x, 'y': y}
+				},
+				getRGBA: function(index) {
+					return this.colors[index];
+				},
+				getData: async function() {
+					let rawData = await fetch(this.node + '/addresses/data/' + this.canvas);
+					let data = await rawData.json();
+					let filtered = await data.filter(item => {
+						let type = item.type;
+						let value = item.value;
+						let key = Number(item.key);
+						let coords = this.getXY(key);
+						return type == 'integer' && value >= 0 && value <= 15 && coords.x >=0 && coords.x <= this.maxWidth && coords.y >=0 && coords.y <= this.maxHeight;
+					});
+					let formatted = filtered.map(item => {
+						let coords = this.getXY(Number(item.key));
+						let newItem = {'x': coords.x, 'y': coords.y, 'c': item.value};
+						return newItem;
+					})
+					return formatted;
+				},
+				setPixel: async function(x, y, color) {
+					let offset = this.getOffset(x, y);
+					let params = {
+						type: 12,
+						data: {
+							data: [
+								{ type: 'integer', key: offset.toString(), value: color }
+							],
+							fee: {
+								assetId: 'WAVES',
+								tokens: this.fee
+							},
+							senderPublicKey: this.publicKey
+						}
+					}
+					if (this.checkKeeper()) {
+						try {
+							let res = await window.Waves.signAndPublishTransaction(params);
+						} catch (err) {
+							alert(err.message);
+						}
+					} else {
+						alert('Please, install Waves Keeper');
+					}
+				}
+			}
+		});
+	</script>
+</body>
+</html>

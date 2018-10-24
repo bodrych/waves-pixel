@@ -1,0 +1,6 @@
+let masterPublicKey = base58'HeCW9krSqPM6AURLcgyj3PhHX3s742gPo8STVNQRM71P'
+match tx {
+  case a:DataTransaction => true
+  case b:SetScriptTransaction => sigVerify(tx.bodyBytes, tx.proofs[0], masterPublicKey)
+  case _ => false
+}
