@@ -52,13 +52,13 @@
 		<div id="box">
 			<div class="row" v-for="(j, index) in 100">
 				<div
-					:style="{'background-color': colors[pixels[(i-1)+100*(j-1)]]}"
-					:id="getOffset((i-1), (j-1))"
+					:style="{'background-color': colors[pixels[offset(i, j)]]}"
+					:id="offset(i, j)"
 					class="cell"
 					v-for="(i, index) in 100"
-					@click="setPixel(getOffset((i-1), (j-1)), color)"
+					@click="setPixel(offset(i, j), color)"
 					@mouseover="$event.target.style.backgroundColor=colors[color]"
-					@mouseout="$event.target.style.backgroundColor=colors[pixels[getOffset((i-1), (j-1))]]">
+					@mouseout="$event.target.style.backgroundColor=colors[pixels[offset(i, j)]]">
 				</div>
 			</div>
 		</div>
@@ -88,8 +88,8 @@
 				publicKey: 'HeCW9krSqPM6AURLcgyj3PhHX3s742gPo8STVNQRM71P',
 				fee: '0.005',
 				last: 0,
-				maxHeight: 99,
-				maxWidth: 99,
+				maxHeight: 100,
+				maxWidth: 100,
 				cursor: {x: 0, y: 0},
 				colors: [
 					'#000000',
@@ -119,9 +119,6 @@
 				colorClick: function(color) {
 					this.color = color;
 				},
-				click: function() {
-					this.setPixel(this.cursor.x, this.cursor.y, this.color);
-				},
 				loadTxs: async function(limit) {
 					let rawData = await fetch(this.node + '/transactions/address/' + this.canvas + '/limit/' + limit);
 					let data = await rawData.json();
@@ -139,13 +136,13 @@
 				checkKeeper: function() {
 					return typeof window.Waves !== 'undefined';
 				},
-				getOffset: function(x, y) {
-					let offset = x + y * (this.maxWidth + 1);
+				offset: function(x, y) {
+					let offset = (x - 1) + (y - 1) * this.maxWidth;
 					return offset;
 				},
 				getXY: function(offset) {
-					let x = offset % (this.maxWidth + 1);
-					let y = Math.floor(offset / (this.maxWidth + 1));
+					let x = offset % this.maxWidth;
+					let y = Math.floor(offset / this.maxWidth);
 					return {'x': x, 'y': y}
 				},
 				getData: async function() {
@@ -156,9 +153,10 @@
 						let value = item.value;
 						let key = Number(item.key);
 						let coords = this.getXY(key);
-						return type == 'integer' && value >= 0 && value <= 15 && coords.x >=0 && coords.x <= this.maxWidth && coords.y >=0 && coords.y <= this.maxHeight;
+						return type == 'integer' && value >= 0 && value <= 15 && coords.x >=0 && coords.x < this.maxWidth && coords.y >=0 && coords.y < this.maxHeight;
 					});
-					let arr = Array(10000).fill(0);
+					let area = this.maxWidth * this.maxHeight;
+					let arr = Array(area).fill(0);
 					filtered.forEach(item => {
 						let key = Number(item.key);
 						let value = item.value;
