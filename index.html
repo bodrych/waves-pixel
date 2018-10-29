@@ -2,7 +2,6 @@
 <html>
 <head>
 	<script src="https://cdn.jsdelivr.net/npm/vue@2.5.17/dist/vue.min.js"></script>
-	<script src="https://unpkg.com/base-58@0.0.1/Base58.js"></script>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAABFvgAARb4B0IHyYgAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAIpSURBVHic5du5edtAFEXhM66HqM/OBGVWexz2ohBO/PhJFJZZ3oLlNkCcP5BIYACByzmPj8fjb+Q1pKgPzjmPwBtASunjdrv9ibiOEICv8c8LCUJwB5iLl0UguAKsxcu8EdwASuJlngguADXxMi8Ec4CWeJkHgilAT7zMGsEMQCNeZolgAqAZL7NCUAewiJdZIKgCWMbLtBHUADziZZoIKgCe8TIthG6AiHiZBkIXQGS8rBehGWAP8bIehCaAPcXLWhGqAfYYL2tBqALYc7ysFqEY4AjxshqEIoAjxctKETYBjhgvK0FYBThyvGwLYRHgDPGyNYRZgDPFy5YQfgCcMV42h/AN4MzxsleEJ8AV4mVfERJcK14mCOmK8bKU0sevaZo+oy8katM0fSaA+/3+O6UUelAhYOMwDO/PP4IXQxiHYXiHl3+DF0F4xsPMF6GTI3yLh4WvwidF+BEPKz+GToYwGw8bP4dPgrAYDwU3RA6OsBoPhbfEDoqwGQ8VN0UPhlAUD5W3xQ+CUBwPDQ9Gdo5QFQ+Nj8Z2ilAdDx0PR3eG0BQPnY/Hd4LQHA8KBySCEbriQemITBBCdzwoHpJyRlCJB+Vjck4IavFgcFDSGEE1HoyOyhohqMeD4WFpZQSTeDA+Lq+EYBYPDi9MdCKYxoPTKzONCObx4PjSVCWCSzw4vzZXiOAWDwEvTm4guMZD0KuzCwju8RD48vQLQkh8+HLO4//zCWH7B6TVRCpVqUZ2AAAAAElFTkSuQmCC" />
@@ -16,16 +15,6 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-	}
-	#canvas {
-		width: 100%;
-		image-rendering: pixelated;
-	}
-	#canvas-wrapper {
-		height: 90vh;
-		width: 90vh;
-		border: 1px solid lightgray;
-		margin: 0px 0px 0px 0px;
 	}
 	#palette {
 		margin: 5px 0px 0px 0px;
@@ -44,15 +33,34 @@
 		justify-content: space-between;
 		width: 90vh;
 	}
+	.row {
+		display: flex;
+		flex-direction: row;
+	}
+	.cell {
+		background-color: black;
+		width: calc(90vh / 100);
+		height: calc(90vh / 100);
+	}
+	#box {
+		border: 1px solid lightgray;
+	}
 </style>
 </head>
 <body>
 	<div id="app">
-		<div :style="{'border-bottom': '1px solid' + colors[color]}">
-			{{ cursor.x }}, {{ cursor.y }}
-		</div>
-		<div id="canvas-wrapper">
-			<canvas id="canvas" width="100" height="100" @mousemove="move" @click.left="click"></canvas>
+		<div id="box">
+			<div class="row" v-for="(j, index) in 100">
+				<div
+					:style="{'background-color': colors[pixels[(i-1)+100*(j-1)]]}"
+					:id="getOffset((i-1), (j-1))"
+					class="cell"
+					v-for="(i, index) in 100"
+					@click="setPixel(getOffset((i-1), (j-1)), color)"
+					@mouseover="$event.target.style.backgroundColor=colors[color]"
+					@mouseout="$event.target.style.backgroundColor=colors[pixels[getOffset((i-1), (j-1))]]">
+				</div>
+			</div>
 		</div>
 		<div id="palette">
 			<div :style="{'background-color': item}" v-for="(item, index) in colors" @click.left="colorClick(index)"></div>
@@ -101,7 +109,7 @@
 					'#047e7e',
 					'#06ffff'
 				],
-				color: 0
+				color: 2
 			},
 			created: function() {
 				this.update();
@@ -110,10 +118,6 @@
 			methods: {
 				colorClick: function(color) {
 					this.color = color;
-				},
-				move: function(event) {
-					this.cursor.x = Math.floor(event.layerX / (event.toElement.clientWidth / 100));
-					this.cursor.y = Math.floor(event.layerY / (event.toElement.clientHeight / 100));
 				},
 				click: function() {
 					this.setPixel(this.cursor.x, this.cursor.y, this.color);
@@ -129,13 +133,6 @@
 					if (lastTime != this.last) {
 						let data = await this.getData();
 						this.pixels = data.slice(0);
-						let canvas = document.getElementById('canvas'),
-						ctx = canvas.getContext('2d');
-						ctx.clearRect(0, 0, canvas.width, canvas.height);
-						this.pixels.forEach(item => {
-							ctx.fillStyle = this.colors[item.c];
-							ctx.fillRect( item.x, item.y, 1, 1 );
-						});
 						this.last = lastTime.valueOf();
 					}
 				},
@@ -151,9 +148,6 @@
 					let y = Math.floor(offset / (this.maxWidth + 1));
 					return {'x': x, 'y': y}
 				},
-				getRGBA: function(index) {
-					return this.colors[index];
-				},
 				getData: async function() {
 					let rawData = await fetch(this.node + '/addresses/data/' + this.canvas);
 					let data = await rawData.json();
@@ -164,15 +158,15 @@
 						let coords = this.getXY(key);
 						return type == 'integer' && value >= 0 && value <= 15 && coords.x >=0 && coords.x <= this.maxWidth && coords.y >=0 && coords.y <= this.maxHeight;
 					});
-					let formatted = filtered.map(item => {
-						let coords = this.getXY(Number(item.key));
-						let newItem = {'x': coords.x, 'y': coords.y, 'c': item.value};
-						return newItem;
-					})
-					return formatted;
+					let arr = Array(10000).fill(0);
+					filtered.forEach(item => {
+						let key = Number(item.key);
+						let value = item.value;
+						arr.splice(key, 1, value);
+					});
+					return arr;
 				},
-				setPixel: async function(x, y, color) {
-					let offset = this.getOffset(x, y);
+				setPixel: async function(offset, color) {
 					let params = {
 						type: 12,
 						data: {
