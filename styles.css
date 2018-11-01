@@ -1,0 +1,40 @@
+body {
+	font-family: Consolas, monospace;
+	font-size: 13px;
+}
+#app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+#palette {
+	margin: 5px 0px 0px 0px;
+	border: 1px solid lightgray;
+	display: flex;
+	flex-direction: row;
+	width: 90vh;
+}
+#palette > div {
+	height: 30px;
+	flex:1;
+}
+#footer {
+	margin: 5px 0px 0px 0px;
+	display: flex;
+	justify-content: space-between;
+	width: 90vh;
+}
+.row {
+	display: flex;
+	flex-direction: row;
+}
+.cell {
+	background-color: black;
+/*		width: calc(90vh / 100);
+	height: calc(90vh / 100);*/
+	width: 10px;
+	height: 10px;
+}
+#box {
+	border: 1px solid lightgray;
+}
