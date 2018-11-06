@@ -41,7 +41,7 @@ var app = new Vue({
 			this.color = color;
 		},
 		loadTxs: async function(limit) {
-			let response = await axios.get(this.node + '/transactions/address/' + this.canvas + '/limit/' + limit);
+			let response = await axios.get(`${this.node}/transactions/address/${this.canvas}/limit/${limit}`);
 			return response.data;
 		},
 		update: async function() {
@@ -63,7 +63,7 @@ var app = new Vue({
 			return {'x': x, 'y': y}
 		},
 		getData: async function() {
-			let response = await axios.get(this.node + '/addresses/data/' + this.canvas);
+			let response = await axios.get(`${this.node}/addresses/data/${this.canvas}`);
 			let data = response.data;
 			let filtered = await data.filter(item => {
 				let type = item.type;
@@ -98,7 +98,7 @@ var app = new Vue({
 				timestamp: (new Date()).getTime()
 			};
 			try {
-				let response = await axios.post(this.node + '/transactions/broadcast', params);
+				let response = await axios.post(`${this.node}/transactions/broadcast`, params);
 			} catch (err) {
 				alert(err.message);
 			}
