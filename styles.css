@@ -17,7 +17,10 @@ body {
 }
 #palette > div {
 	height: 30px;
-	flex:1;
+	flex: 1;
+}
+#palette > div:hover {
+	flex: 2;
 }
 #footer {
 	margin: 5px 0px 0px 0px;
